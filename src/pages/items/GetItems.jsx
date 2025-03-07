@@ -188,18 +188,22 @@ const GetItems = () => {
     setIsUpdatePriceModalOpen(true);
   };
 
-  const handleSearch = () => {
-    if (searchName.trim() === '') {
-      // If search is empty, show all items
-      setFilteredItems([]);
-      return;
-    }
+  // Add this useEffect for handling search
+  useEffect(() => {
+    const handleSearch = () => {
+      if (searchName.trim() === '') {
+        setFilteredItems([]);
+        return;
+      }
 
-    const filtered = items.filter(item =>
-      item.itemName.toLowerCase().includes(searchName.toLowerCase())
-    );
-    setFilteredItems(filtered);
-  };
+      const filtered = items.filter(item =>
+        item.itemName.toLowerCase().includes(searchName.toLowerCase())
+      );
+      setFilteredItems(filtered);
+    };
+
+    handleSearch();
+  }, [searchName, items]); // Dependencies: searchName and items
 
   return (
     <div className="container mx-auto p-4 h-screen">
@@ -226,8 +230,9 @@ const GetItems = () => {
         </div>
       </div>
 
-      {selectedBrand && (
-        <div className="mb-5">
+     <div className="flex justify-center items-center">
+     {selectedBrand && (
+        <div className="mx-4">
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center"
@@ -237,25 +242,14 @@ const GetItems = () => {
         </div>
       )}
       {selectedBrand && items.length > 0 && (
-        <div className="mb-5 flex items-center gap-4">
+        <div className="mx-4 flex items-center gap-4">
           <input
             type="text"
             placeholder="Search by item name..."
             className="p-2 border rounded"
             value={searchName}
             onChange={(e) => setSearchName(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                handleSearch();
-              }
-            }}
           />
-          <button
-            onClick={handleSearch}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center"
-          >
-            <FaSearch className="mr-2" /> Search
-          </button>
           {searchName.length > 0 && (
             <button
               onClick={() => {
@@ -269,6 +263,7 @@ const GetItems = () => {
           )}
         </div>
       )}
+     </div>
 
       {currentItems.length > 0 && (
         <div className="mb-4">
