@@ -188,9 +188,9 @@ const GetItems = () => {
     setIsUpdatePriceModalOpen(true);
   };
 
-  const handleSearch = () => {
+  // Add this useEffect for search functionality
+  useEffect(() => {
     if (searchName.trim() === '') {
-      // If search is empty, show all items
       setFilteredItems([]);
       return;
     }
@@ -199,7 +199,7 @@ const GetItems = () => {
       item.itemName.toLowerCase().includes(searchName.toLowerCase())
     );
     setFilteredItems(filtered);
-  };
+  }, [searchName, items]); // Dependencies: searchName and items
 
   return (
     <div className="container mx-auto p-4 h-screen">
@@ -244,18 +244,7 @@ const GetItems = () => {
             className="p-2 border rounded"
             value={searchName}
             onChange={(e) => setSearchName(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                handleSearch();
-              }
-            }}
           />
-          <button
-            onClick={handleSearch}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center"
-          >
-            <FaSearch className="mr-2" /> Search
-          </button>
           {searchName.length > 0 && (
             <button
               onClick={() => {
