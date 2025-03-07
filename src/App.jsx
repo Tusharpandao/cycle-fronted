@@ -7,7 +7,9 @@ import CalculateForm from "./pages/calculateForm/CalculateForm";
 import Estimates from "./pages/estimates/Estimates";
 import SignIn from "./pages/sign_in/SingIn";
 import SignUp from "./pages/sign_out/SignUp";
-import { EstimateProvider } from "./context/EstimateContext";
+import { EstimateProvider } from "./context/EstimateContext"
+import GetItems from "./pages/items/GetItems";
+
 
 function App() {
   return (
@@ -21,6 +23,7 @@ function App() {
             <Route path="/estimates" element={<Estimates />} />
             <Route path="/signIn" element={<SignIn />} />
             <Route path="/signUp" element={<SignUp />} />
+            <Route path="/items" element={<GetItems />} />
           </Route>
         </Routes>
       </Router>
