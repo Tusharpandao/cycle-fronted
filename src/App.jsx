@@ -8,7 +8,8 @@ import Estimates from "./pages/estimates/Estimates";
 import SignIn from "./pages/sign_in/SingIn";
 import SignUp from "./pages/sign_out/SignUp";
 import { EstimateProvider } from "./context/EstimateContext"
-import GetItems from "./pages/items/GetItems";
+import Items from "./pages/items/Items";
+import Brand from "./pages/brand/Brand";
 
 
 function App() {
@@ -23,7 +24,8 @@ function App() {
             <Route path="/estimates" element={<Estimates />} />
             <Route path="/signIn" element={<SignIn />} />
             <Route path="/signUp" element={<SignUp />} />
-            <Route path="/items" element={<GetItems />} />
+            <Route path="/items" element={<Items />} />
+            <Route path="/brand" element={<Brand />} />
           </Route>
         </Routes>
       </Router>
