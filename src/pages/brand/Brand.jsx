@@ -13,6 +13,8 @@ const Brand = () => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const brandsPerPage = 5;
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredBrands, setFilteredBrands] = useState([]);
 
   // Auth config
   const authConfig = {
@@ -27,12 +29,32 @@ const Brand = () => {
     try {
       const response = await axios.get("http://localhost:8080/brand/brands");
       setBrands(response.data);
+
+      // Check if the response data is empty
+      if (response.data.length === 0) {
+        Swal.fire({
+          icon: "info",
+          title: "No Brands Found",
+          text: "There are no brands available. Please add a new brand.",
+        });
+      }
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.response?.data || "Failed to fetch brands",
-      });
+      setBrands([]); // Clear brands on error
+      if (error.code === "ERR_NETWORK") {
+        Swal.fire({
+          icon: "error",
+          title: "Server Error",
+          text: "Unable to connect to the server. Please try again later.",
+          footer: '<a href="#">Need help?</a>',
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text:
+            error.response?.data || "Failed to fetch brands. Please try again.",
+        });
+      }
     }
   };
 
@@ -50,6 +72,19 @@ const Brand = () => {
     }
   }, [brands.length, currentPage, brandsPerPage]);
 
+  // Add this useEffect for search functionality
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredBrands([]);
+      return;
+    }
+
+    const filtered = brands.filter((brand) =>
+      brand.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredBrands(filtered);
+  }, [searchTerm, brands]);
+
   // Add brand
   const handleAddBrand = async () => {
     if (!newBrandName.trim()) {
@@ -62,7 +97,6 @@ const Brand = () => {
     }
 
     try {
-    
       await axios.post(
         `http://localhost:8080/brand/add?name=${newBrandName}`,
         null,
@@ -147,12 +181,15 @@ const Brand = () => {
           );
 
           // Get the current number of brands on the page
-          const currentPageBrands = brands.slice(indexOfFirstBrand, indexOfLastBrand);
-          
+          const currentPageBrands = brands.slice(
+            indexOfFirstBrand,
+            indexOfLastBrand
+          );
+
           // If this is the last item on the page and not the first page,
           // decrease the current page
           if (currentPageBrands.length === 1 && currentPage > 1) {
-            setCurrentPage(prev => prev - 1);
+            setCurrentPage((prev) => prev - 1);
           }
 
           await fetchBrands();
@@ -179,117 +216,181 @@ const Brand = () => {
 
   const indexOfLastBrand = currentPage * brandsPerPage;
   const indexOfFirstBrand = indexOfLastBrand - brandsPerPage;
-  const currentBrands = brands.slice(indexOfFirstBrand, indexOfLastBrand);
-  const totalPages = Math.ceil(brands.length / brandsPerPage);
+  const currentBrands =
+    filteredBrands.length > 0
+      ? filteredBrands.slice(indexOfFirstBrand, indexOfLastBrand)
+      : brands.slice(indexOfFirstBrand, indexOfLastBrand);
+  const totalPages = Math.ceil(
+    (filteredBrands.length > 0 ? filteredBrands.length : brands.length) /
+      brandsPerPage
+  );
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Add Brand Button */}
-      <div className="mb-5 w-full md:w-3/4 mx-auto">
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center"
-        >
-          <FaPlus className="mr-2" /> Add Brand
-        </button>
-      </div>
-
-      {/* Modified Brands Table */}
-      <div className="overflow-x-auto w-full md:w-3/4 mx-auto">
-        <table className="min-w-full bg-white">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="px-6 py-3 text-left">Brand Name</th>
-              <th className="px-6 py-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentBrands.map((brand) => (
-              <tr key={brand.id} className="border-b hover:bg-gray-200">
-                <td className="px-6 py-4">{brand.name}</td>
-                <td className="px-6 py-4">
-                  <div className="flex justify-end items-center gap-3">
-                    <button
-                      onClick={() => handleViewItems(brand.name)}
-                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 flex items-center text-sm"
-                    >
-                      <FaList className="mr-1 hidden sm:block" />
-                      <span>View</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingBrand(brand);
-                        setNewBrandName(brand.name);
-                        setIsEditModalOpen(true);
-                      }}
-                      className="text-blue-600 hover:text-blue-800 p-1"
-                      title="Edit"
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(brand.id)}
-                      className="text-red-600 hover:text-red-800 p-1"
-                      title="Delete"
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Add Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-4">
+      {brands.length > 0 ? (
+        <div>
+          {/* Add Brand Button */}
+          <div className="mb-5 w-full md:w-3/4 mx-auto">
             <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className={`px-3 py-1 rounded ${
-                currentPage === 1
-                  ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600 text-white"
-              }`}
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center"
             >
-              Previous
-            </button>
-
-            <div className="flex gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (pageNum) => (
-                  <button
-                    key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
-                    className={`px-3 py-1 rounded ${
-                      currentPage === pageNum
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 hover:bg-gray-300"
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                )
-              )}
-            </div>
-
-            <button
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-              className={`px-3 py-1 rounded ${
-                currentPage === totalPages
-                  ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600 text-white"
-              }`}
-            >
-              Next
+              <FaPlus className="mr-2" /> Add Brand
             </button>
           </div>
-        )}
-      </div>
+
+          <div className="mb-5 w-3/4 mx-auto flex items-center gap-4">
+            <input
+              type="text"
+              placeholder="Search brands..."
+              className="p-2 border rounded"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm.length > 0 && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              >
+                Clear Search
+              </button>
+            )}
+          </div>
+
+          {/* Add Search Results Info */}
+          {searchTerm && (
+            <div className="mb-4 w-full md:w-3/4 mx-auto">
+              {filteredBrands.length > 0 ? (
+                <p className="text-gray-600">
+                  Found {filteredBrands.length} brand(s) matching: {searchTerm}
+                </p>
+              ) : (
+                <p className="text-gray-600">
+                  No brands found matching: {searchTerm}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Add this conditional rendering for the table */}
+          {/* {brands.length > 0 ? ( */}
+          <div className="overflow-x-auto w-full md:w-3/4 mx-auto">
+            <table className="min-w-full bg-white">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-6 py-3 text-center">Brand Name</th>
+                  <th className="px-6 py-3 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentBrands.map((brand) => (
+                  <tr key={brand.id} className="border-b hover:bg-gray-200">
+                    <td className="px-6 py-4 text-center">{brand.name}</td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex justify-center  items-center gap-9">
+                        <button
+                          onClick={() => handleViewItems(brand.name)}
+                          className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 flex items-center text-sm"
+                        >
+                          <FaList className="mr-1 hidden sm:block" />
+                          <span>View</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingBrand(brand);
+                            setNewBrandName(brand.name);
+                            setIsEditModalOpen(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 p-1"
+                          title="Edit"
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(brand.id)}
+                          className="text-red-600 hover:text-red-800 p-1"
+                          title="Delete"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Modify pagination to show only when there are brands */}
+            {(filteredBrands.length > 0 ||
+              (!searchTerm && brands.length > 0)) &&
+              totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-4">
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1}
+                    className={`px-3 py-1 rounded ${
+                      currentPage === 1
+                        ? "bg-gray-300 cursor-not-allowed"
+                        : "bg-blue-500 hover:bg-blue-600 text-white"
+                    }`}
+                  >
+                    Previous
+                  </button>
+
+                  <div className="flex gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (pageNum) => (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`px-3 py-1 rounded ${
+                            currentPage === pageNum
+                              ? "bg-blue-600 text-white"
+                              : "bg-gray-200 hover:bg-gray-300"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      )
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-1 rounded ${
+                      currentPage === totalPages
+                        ? "bg-gray-300 cursor-not-allowed"
+                        : "bg-blue-500 hover:bg-blue-600 text-white"
+                    }`}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+          </div>
+        </div>
+      ) : (
+        <div className="w-full md:w-3/4 mx-auto text-center py-8">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <p className="text-gray-600 text-lg mb-4">
+              {searchTerm
+                ? "No brands found matching your search."
+                : "No brands available at the moment."}
+            </p>
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center mx-auto"
+            >
+              <FaPlus className="mr-2" /> Add Your First Brand
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Add Brand Modal */}
       {isAddModalOpen && (
