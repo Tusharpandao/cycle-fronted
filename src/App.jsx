@@ -9,6 +9,8 @@ import SignIn from "./pages/sign_in/SingIn";
 import SignUp from "./pages/sign_out/SignUp";
 import { EstimateProvider } from "./context/EstimateContext"
 import GetItems from "./pages/items/GetItems";
+import AddBrand from './component/brand/AddBrand';
+import GetBrand from './pages/brand/GetBrand';
 
 
 function App() {
@@ -24,6 +26,7 @@ function App() {
             <Route path="/signIn" element={<SignIn />} />
             <Route path="/signUp" element={<SignUp />} />
             <Route path="/items" element={<GetItems />} />
+            <Route path="/brand" element={<GetBrand />} />
           </Route>
         </Routes>
       </Router>
